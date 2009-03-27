@@ -37,7 +37,7 @@ def irccat_config
   end
   puts "\n== Final steps"
   file = ask("Configuration filename:  ") { |q| q.default = "config.yml" }
-  puts "Warning: File exists! If you choose yes now the file will be overwritted" if File.exists?(File.expand_path(file))  
+  puts "Warning: File exists! If you choose yes now the file will be overwritten" if File.exists?(File.expand_path(file))
   if agree("Write configuration file?  ", true)
     File.open(File.expand_path(file), "w") { |yfile| YAML.dump(config, yfile) }
   else

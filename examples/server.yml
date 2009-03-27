@@ -3,17 +3,17 @@ irc:
   host: 'irc.tty2.org'
   port: '6667'
   nick: irc_cat
-  nick_pass: foo
-  channel: '#irc_cat'
-  channel_pass: bar
-  # or:
-  # channel: ['#one', '#two', '#three']
-  # NB: the multichannel quickhack requires channel_pass to be hacked up. (not done (yet?))
+  pass: foo
+  channels:
+  - "#irc_cat"
+  # This is a channel with a key
+  #- "#secret password"
 
 # HTTP Server
-
 http:
   enabled: true
+  user: http_user
+  pass: http_pass
   host: 0.0.0.0
   port: '3489'
   # Enable post-receive stuff from Github
@@ -22,7 +22,6 @@ http:
   send: true
 
 # TCP Server
-
 tcp:
   enabled: true
   host: 0.0.0.0

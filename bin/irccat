@@ -3,18 +3,12 @@
 #  Created on 2008-2-17.
 #  Copyright (c) 2008. All rights reserved.
 
-begin
-  require 'rubygems'
-rescue LoadError
-end
-
 require 'optparse'
 require 'yaml'
 
-OPTIONS = {
-  :path     => './config.yml'
+options = {
+  :config_filename => './config.yml'
 }
-MANDATORY_OPTIONS = %w(  )
 
 parser = OptionParser.new do |opts|
   opts.banner = <<BANNER
@@ -24,43 +18,48 @@ Usage: #{File.basename($0)} [options]
 
 Options are:
 BANNER
+
   opts.separator ""
-  opts.on("-c", "--config=CONFIG", String,
-          "Path to the config file.",
-          "Default: ./config.yml") { |OPTIONS[:configfile]| }
-  opts.on("-h", "--help",
-          "Show this help message.") { puts opts; exit }
-  opts.parse!(ARGV)
 
-  if MANDATORY_OPTIONS && MANDATORY_OPTIONS.find { |option| OPTIONS[option.to_sym].nil? }
-    puts opts; exit
+  opts.on("-c", "--config=CONFIG", String, "Path to the config file.", "Default: ./config.yml") do |filename|
+    options[:config_filename] = filename
   end
+
+  opts.on("-h", "--help", "Show this help message.") {
+    puts opts
+    exit
+  }
 end
 
-unless OPTIONS[:configfile].nil?
-  configfile = OPTIONS[:configfile]
-else
-  configfile = './config.yml'
-end
+parser.parse!(ARGV)
 
-raise "Can't read configuration file (#{configfile})" unless File.exists?(configfile)
-@config = YAML.load_file(configfile)
-begin
-  require 'irc_cat'
-rescue LoadError
-  require 'lib/irc_cat'
-end
+raise "Can't read configuration file (#{options[:config_filename]})" unless File.exists?(options[:config_filename])
+config = YAML.load_file(options[:config_filename])
+
+require File.dirname(__FILE__) + '/../lib/irc_cat'
 
 threads = []
 puts "irccat #{IrcCat::VERSION::STRING} (http://irccat.rubyforge.org/)"
 
-Thread.new {
-  @bot = IrcCat::Bot.new(:host => @config['irc']['host'], :port => @config['irc']['port'], :nick => @config['irc']['nick'], :channel => @config['irc']['channel'], :nick_pass => @config['irc']['nick_pass'], :channel_pass => @config['irc']['channel_pass'])
-}
-Thread.new {
-  @tcp = IrcCat::TcpServer.new(@bot, @config, @config['tcp']['host'], @config['tcp']['port'])
-} if @config['tcp']['enabled']
-Thread.new {
-  @http = IrcCat::HttpServer.new(@bot, @config, @config['http']['host'], @config['http']['port'])
-} if @config['http']['enabled']
-@bot.run
+Thread.abort_on_exception = true
+
+irc_config = config['irc']
+IrcCat::Bot.run(irc_config['host'], irc_config['port'], irc_config['nick'], irc_config['pass']) do |bot|
+  puts "Connecting..."
+  irc_config['channels'].each do |channel|
+    name, pass = channel.split(" ")
+    bot.join_channel(name, pass)
+  end
+
+  tcp_config = config['tcp']
+  if tcp_config['enabled']
+    require 'irc_cat/tcp_server'
+    IrcCat::TcpServer.run(bot, tcp_config)
+  end
+
+  http_config = config['http']
+  if http_config['enabled']
+    require 'irc_cat/http_server'
+    IrcCat::HttpServer.run(bot, http_config)
+  end
+end

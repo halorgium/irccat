@@ -42,11 +42,7 @@ raise "Can't find profile #{OPTIONS[:profile]} in ~/.irccat.yml" if @profile.nil
 
 raise "Nothing to send" if ARGV.empty?
 
-begin
-  require 'irc_cat/tcp_client'
-rescue LoadError
-  require 'lib/irc_cat/tcp_client'
-end
+require File.dirname(__FILE__) + '/../lib/irc_cat/tcp_client'
 
 message = ARGV.join(' ')
 

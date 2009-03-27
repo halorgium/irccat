@@ -1,23 +1,38 @@
 # The TCP Server
 module IrcCat
   class TcpServer
-    
-    def initialize(bot,config,ip='127.0.0.1',port='8080')
-      @socket = TCPserver.new(ip,port)
-      puts "Starting TCP (#{ip}:#{port})"
-      
-      loop do  
-        Thread.start(@socket.accept) do |s|
-          str = s.recv(config['tcp']['size']) 
-          sstr = str.split(/\n/)
-          sstr.each do |l|
-            bot.say(config['irc']['channel'],"#{l}")
+    def self.run(bot, config)
+      new(bot, config).run
+    end
+
+    def initialize(bot, config)
+      @bot, @config = bot, config
+    end
+
+    def run
+      Thread.new do
+        socket = TCPserver.new(ip, port)
+        puts "Starting TCP (#{ip}:#{port})"
+
+        loop do
+          Thread.start(socket.accept) do |s|
+            str = s.recv(@config['size'])
+            sstr = str.split(/\n/)
+            sstr.each do |l|
+              @bot.announce("#{l}")
+            end
+            s.close
           end
-          s.close
-        end  # |s|
-      end # loop
-      
-    end # initialize
-    
-  end # TcpServer
-end # IrcCat
+        end
+      end
+    end
+
+    def ip
+      @config["ip"] || '127.0.0.1'
+    end
+
+    def port
+      @config["port"] || '8080'
+    end
+  end
+end

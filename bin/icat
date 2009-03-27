@@ -40,11 +40,7 @@ raise "Can't read configuration file (~/.irccat.yml)" unless File.exists?(File.e
 @profile = @config["#{OPTIONS[:profile]}"]
 raise "Can't find profile #{OPTIONS[:profile]} in ~/.irccat.yml" if @profile.nil?
 
-begin
-  require 'irc_cat/tcp_client'
-rescue LoadError
-  require 'lib/irc_cat/tcp_client'
-end
+require File.dirname(__FILE__) + '/../lib/irc_cat/tcp_client'
 
 if ARGV.empty?
   puts "has stdin"
