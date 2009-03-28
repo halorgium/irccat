@@ -9,13 +9,17 @@ module IrcCat
 
     def initialize(host, port, nick, nick_pass, &block)
       @host, @port, @nick, @nick_pass = host, port, nick, nick_pass
-      @connect_block = block
+      @online, @connect_block = false, block
 
       @realname = "irccat v#{VERSION::STRING}"
       @refresh_rate = 10
       @channels = {}
 
       puts "Connecting to IRC #{@host}:#{@port}"
+    end
+
+    def online?
+      @online
     end
 
     def run(&block)
@@ -90,7 +94,8 @@ module IrcCat
       case line
       when /^:.+\s376/
         puts "We're online"
-        @connect_block.call(self)
+        @online = true
+        @connect_block.call(self) if @connect_block
       when /^:.+KICK (#[^\s]+)/
         auto_rejoin($1)
       end
