@@ -26,8 +26,8 @@ module IrcCat
     def call(env)
       auth = Rack::Auth::Basic::Request.new(env)
 
-      return Unauthorized unless auth.provided?
-      return BadRequest unless auth.basic?
+      raise Unauthorized unless auth.provided?
+      raise BadRequest unless auth.basic?
       username, password = auth.credentials
       raise Unauthorized unless @config["user"] == username && @config["pass"] == password
 
