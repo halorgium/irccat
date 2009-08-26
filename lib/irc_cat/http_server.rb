@@ -1,8 +1,3 @@
-# The HTTP Server
-
-require 'rack'
-#require 'json'
-
 module IrcCat
   class HttpServer
     class Unauthorized < StandardError; end
@@ -18,19 +13,57 @@ module IrcCat
 
     def run
       host, port = @config['host'], @config['port']
-      Thread.new {
-        Rack::Handler::Mongrel.run(self, :Host => host, :Port => port)
-      }
+      if handler = Rack::Handler.get(handler_name)
+        Thread.new {
+          handler.run(app, :Host => host, :Port => port)
+        }
+      else
+        raise "Could not find a valid Rack handler for #{handler_name.inspect}"
+      end
+    end
+
+    def handler_name
+      @config["server"] || "mongrel"
+    end
+
+    def app
+      endpoint = self
+      builder = Rack::Builder.new
+      if requires_auth?
+        builder.use Rack::Auth::Basic, "irccat" do |user,pass|
+          auth_user == user && auth_pass == pass
+        end
+      end
+      if prefix = @config["prefix"]
+        builder.map prefix do
+          run endpoint
+        end
+      else
+        builder.run endpoint
+      end
+      builder
+    end
+
+    def auth_user
+      @config["user"]
+    end
+
+    def auth_pass
+      @config["pass"]
+    end
+
+    def requires_auth?
+      if auth_user
+        if auth_pass
+          if auth_pass.empty?
+            raise "Empty HTTP password in config"
+          end
+          true
+        end
+      end
     end
 
     def call(env)
-      auth = Rack::Auth::Basic::Request.new(env)
-
-      raise Unauthorized unless auth.provided?
-      raise BadRequest unless auth.basic?
-      username, password = auth.credentials
-      raise Unauthorized unless @config["user"] == username && @config["pass"] == password
-
       request = Rack::Request.new(env)
 
       case request.path_info
@@ -53,7 +86,6 @@ module IrcCat
       when "/github"
         raise "GitHub support is not enabled" unless @config["github"]
 
-        require 'json'
         data = JSON.parse(request.POST['payload'])
 
         repository = data['repository']['name']
