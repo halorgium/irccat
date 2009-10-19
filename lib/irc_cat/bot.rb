@@ -71,6 +71,10 @@ module IrcCat
       sendln "PRIVMSG #{chan} :#{msg}"
     end
 
+    def topic(chan, msg)
+      sendln "TOPIC #{chan} :#{msg}"
+    end
+
     # Send EXIT
     def sexit(message = 'quit')
       sendln "QUIT :#{message}"

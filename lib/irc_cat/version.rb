@@ -1,10 +1,9 @@
 module IrcCat #:nodoc:
   module VERSION #:nodoc:
     MAJOR = 0
-    MINOR = 2
-    TINY  = 1
-    MICRO = 2
+    MINOR = 3
+    TINY  = 0
 
-    STRING = [MAJOR, MINOR, TINY, MICRO].join('.')
+    STRING = [MAJOR, MINOR, TINY].join('.')
   end
 end

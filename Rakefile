@@ -12,14 +12,16 @@ require 'bundler'
   s.description = s.summary
   s.homepage = "http://github.com/webs/irccat"
 
-  manifest = Bundler::ManifestFile.load(File.dirname(__FILE__) + '/Gemfile')
+  manifest = Bundler::Environment.load(File.dirname(__FILE__) + '/Gemfile')
   manifest.dependencies.each do |d|
-    next unless d.in?(:release)
+    next if d.only && d.only.include?('test')
     s.add_dependency(d.name, d.version)
   end
 
+  s.executables = %w( icat iecho irccat irccat-config )
+
   s.require_path = 'lib'
-  s.files = Dir.glob("lib/**/*.rb") + Dir.glob("bin/*")
+  s.files = Dir.glob("lib/**/*.rb")
 end
 
 require 'rake/gempackagetask'

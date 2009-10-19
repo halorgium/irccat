@@ -69,6 +69,16 @@ module IrcCat
       case request.path_info
       when "/"
         [200, {"Content-Type" => "text/plain"}, "OK"]
+      when "/topic"
+        message = request.params["message"]
+        if channel = request.params["channel"]
+          @bot.join_channel("##{channel}", request.params["key"])
+          @bot.topic("##{channel}", message)
+        else
+          raise "Need a channel"
+        end
+
+        [200, {"Content-Type" => "text/plain"}, "OK"]
       when "/send"
         raise "Send support is not enabled" unless @config["send"]
 
